@@ -1,0 +1,56 @@
+import hashlib
+import json
+from time import time
+
+class Blockchain:
+    def __init__(self):
+        self.chain = []
+        self.current_transactions = []
+        self.new_block(previous_hash=1, proof=100)
+
+    def new_block(self, proof, previous_hash=None):
+        block = {
+            'index': len(self.chain) + 1,
+            'timestamp': time(),
+            'transactions': self.current_transactions,
+            'proof': proof,
+            'previous_hash': previous_hash or self.hash(self.chain[-1]),
+        }
+        self.current_transactions = []
+        self.chain.append(block)
+        return block
+
+    def new_transaction(self, sender, recipient, amount):
+        self.current_transactions.append({
+            'sender': sender,
+            'recipient': recipient,
+            'amount': amount,
+        })
+        return self.last_block['index'] + 1
+
+    @staticmethod
+    def hash(block):
+        block_string = json.dumps(block, sort_keys=True).encode()
+        return hashlib.sha256(block_string).hexdigest()
+
+    @property
+    def last_block(self):
+        return self.chain[-1]
+
+# Створення блокчейну
+blockchain = Blockchain()
+
+# Додавання транзакцій
+blockchain.new_transaction("Alice", "Bob", 50)
+blockchain.new_transaction("Bob", "Charlie", 30)
+
+# Додавання нового блока
+last_block = blockchain.last_block
+last_proof = last_block['proof']
+proof = 0  # Проста доказова робота, яка шукає число, яке в поєднанні з попереднім доказом дає хеш з певною кількістю нулів на початку
+while not Blockchain.hash({'proof': proof, 'previous_proof': last_proof})[:4] == '0000':
+    proof += 1
+previous_hash = Blockchain.hash(last_block)
+block = blockchain.new_block(proof, previous_hash)
+
+print("Блокчейн:", blockchain.chain)
